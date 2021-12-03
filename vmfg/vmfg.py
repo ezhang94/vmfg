@@ -1,18 +1,20 @@
 """
 Implementation of the von Mises-Fisher-Gaussian distribution,
-as presented in
-
-[1] Mukhopadhyay M, Li D, and Dunson, DB. "Estimating densities with nonlinear
-support using Fisher-Gaussian kernels." Journal of the Royal Statistical
-Society: Series B (Statistical Methodology). 2020; 82: 1249–1271.
+as presented in:
+    [1] Mukhopadhyay M, Li D, and Dunson, DB. "Estimating densities with
+    nonlinear support using Fisher-Gaussian kernels." Journal of the Royal
+    Statistics Society: Series B (Statistical Methodology). 2020; 82: 1249–1271.
 """
 
 
-from vmfg.util import *
+from functools import partial
 
 import jax.numpy as np
 import jax.random as jr
 
+from vmfg import util
+
+# TFP and helpers
 import tensorflow_probability.substrates.jax.distributions as tfd
 
 from tensorflow_probability.python.internal.reparameterization \
@@ -22,9 +24,11 @@ from vmfg.util import PositiveScalarProperties
 from tensorflow_probability.substrates.jax.internal.parameter_properties \
                                                 import BIJECTOR_NOT_IMPLEMENTED
 
+# Typing
 from typing import Callable, Optional
 from jax._src.numpy.lax_numpy import _arraylike
 
+# -----------------------------------------------------------------------------
 CONC_REGULARIZEDR = 1e-8
 VARIANCE_REGULARIZER = 1e-8
 
@@ -70,13 +74,18 @@ class VonMisesFisherGaussian(tfd.Distribution):
         # From tfp.VonMisesFisher source code:
         #   "mean_direction is always reparameterized. concentration is only
         #   reparameterized for event_dim==3, via an inversion sampler."
-        _event_dim = self._event_shape()
         reparameterization_type = (
             FULLY_REPARAMETERIZED
-            if _event_dim == 3 \
+            if self.dim == 3
             else NOT_REPARAMETERIZED
         )
 
+        # Register D=3 specific functions
+        self._log_vmf_normalizer_fn = (
+            util.log_vmf_3_normalizer
+            if self.dim == 3
+            else partial(util.log_vmf_d_normalizer, d=self.dim)
+        )
 
         super(VonMisesFisherGaussian, self).__init__(
             self._mean_direction.dtype,
@@ -133,6 +142,10 @@ class VonMisesFisherGaussian(tfd.Distribution):
     def radius(self,):
         return self._radius
 
+    @property
+    def dim(self,):
+        return self._event_shape()[-1]
+
     # -------------------------------------------------------------------------
 
     def _sample_n(self, n, seed):
@@ -141,26 +154,42 @@ class VonMisesFisherGaussian(tfd.Distribution):
                 self._mean_direction, self._concentration
                 )._sample_n(n, seed_[0])
         
+        # Sample from Gaussian, conditioned on direction samples
         pos = jr.normal(seed_[1], shape=dirs.shape)
         pos *= self._scale[...,None]
         pos += self._radius[...,None] * dirs
         pos += self._center
 
         return pos
-    
-    def _log_unnormalized_prob(self, x: _arraylike):
-        """Argument of exponential, in Eqn. 4 of [1]."""
+
+    def _log_vmf_normalizer(self, concentration_:_arraylike) -> _arraylike:
+        """Calculate the dim-specific log normalization term of the vMF
+        distribution. Uses a simplfied expression when D=3.
+        """
+        return self._log_vmf_normalizer_fn(concentration_)
+
+    def _log_prob(self, x:_arraylike) -> _arraylike:
+        """Reference: Eqn. 4 of [1]."""
 
         x0 = x - self._center                      # Translate samples to origin
 
+        # Log of exp term
         lp = np.einsum('...d, ...d -> ...', x0, x0)
-        lp += self._radius[...,None] ** 2
+        lp += self._radius ** 2
         lp /= (-2 * self._scale**2)
 
-        return lp
+        # Log normalization of posterior
+        cond_concentration = x0 * (self._radius/self._scale**2)[...,None]
+        cond_concentration += self._mean_direction * self._concentration[...,None]
+        cond_concentration = np.linalg.norm(cond_concentration, axis=-1)
 
-    def _log_prob(self, x: _arraylike) -> _arraylike:
-        return self._log_unnormalized_prob(x, concentration) - self.log_normalization(concentration)
+        lp -= self._log_vmf_normalizer(cond_concentration)
+        
+        # Log normalization of priors
+        lp += self._log_vmf_normalizer(self._concentration)
+        lp -= 0.5 * self.dim * np.log(2*np.pi*(self._scale**2))
+
+        return lp
     
     def _mean(self,
              ):

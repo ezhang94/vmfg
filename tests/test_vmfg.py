@@ -53,3 +53,7 @@ def test_sample(sample_shape, vmfg):
     xs = vmfg.sample(seed=seed, sample_shape=(n,))
 
     assert xs.shape == (n, *sample_shape)
+
+    # Pick arbitrary number that lps should be greater than
+    lps = vmfg.log_prob(xs).mean(axis=0)
+    assert np.all(lps > -20)
