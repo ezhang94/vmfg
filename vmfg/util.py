@@ -78,7 +78,7 @@ def coth(x:_arraylike) -> _arraylike:
     # Replace posinf values with large finite number (via posinf=None)
     return np.nan_to_num(out, nan=1.0, posinf=None, neginf=-np.inf)
 
-def log_vmf_normalizer(concentration:_arraylike, d:int) -> _arraylike:
+def log_vmf_d_normalizer(concentration:_arraylike, d:int) -> _arraylike:
     """Log normalizer of d-dimensional von Mises-Fisher distribution.
 
     Note: A simplified form exists when d=3; see: `log_vmf3_normalizer`.
@@ -95,7 +95,7 @@ def log_vmf_normalizer(concentration:_arraylike, d:int) -> _arraylike:
     lz -= log_bessel_iv_asymptotic(concentration)
     return lz
 
-def log_vmf3_normalizer(concentration:_arraylike) -> _arraylike:
+def log_vmf_3_normalizer(concentration:_arraylike) -> _arraylike:
     """Log normalizer of 3-dimensional von Mises-Fisher distribution.
 
     Note: For the more general d-dimensional case, see `log_vmf_normalizer`.

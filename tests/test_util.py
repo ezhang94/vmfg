@@ -65,22 +65,22 @@ def test_log_vmf_normalizer():
     """
     # Low concentration, nearly a uniform distribution over the sphere
     concentration = 1e-3
-    exact_val = util.log_vmf3_normalizer(concentration)
-    approx_val = util.log_vmf_normalizer(concentration, 3)
+    exact_val = util.log_vmf_3_normalizer(concentration)
+    approx_val = util.log_vmf_d_normalizer(concentration, 3)
     err_small = np.abs(exact_val - approx_val)
     assert np.isclose(approx_val, exact_val, rtol=1e1)
 
     # Midling concentration
     concentration = 20
-    exact_val = util.log_vmf3_normalizer(concentration)
-    approx_val = util.log_vmf_normalizer(concentration, 3)
+    exact_val = util.log_vmf_3_normalizer(concentration)
+    approx_val = util.log_vmf_d_normalizer(concentration, 3)
     assert np.isclose(approx_val, exact_val, rtol=1e-5)
     assert np.abs(exact_val - approx_val) < err_small
     
     # High concentration
     concentration = 100
-    exact_val = util.log_vmf3_normalizer(concentration)
-    approx_val = util.log_vmf_normalizer(concentration, 3)
+    exact_val = util.log_vmf_3_normalizer(concentration)
+    approx_val = util.log_vmf_d_normalizer(concentration, 3)
 
     assert np.isclose(approx_val, exact_val, rtol=1e-5)
     assert np.abs(exact_val - approx_val) < err_small
