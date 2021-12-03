@@ -48,17 +48,17 @@ class VonMisesFisherGaussian(tfd.Distribution):
         scale: shape ([B1,...,Bb],)
             A positive value indicating spread of samples off the surface of
             the hypersphere.
-        center: shape ([B1,...,Bb], D), optional. default: origin
-            Location of the center of the hypersphere.
         radius: shape ([B1,...,Bb]), optional. default: 1
             Radius of the hypersphere.
+        center: shape ([B1,...,Bb], D), optional. default: origin
+            Location of the center of the hypersphere.
     """
     def __init__(self,
                  mean_direction: _arraylike,
                  concentration: _arraylike,
                  scale: _arraylike,
-                 center: Optional[_arraylike]=None, 
                  radius: Optional[_arraylike]=None,
+                 center: Optional[_arraylike]=None, 
                 ):
 
         parameters = dict(locals())
@@ -66,10 +66,10 @@ class VonMisesFisherGaussian(tfd.Distribution):
         self._mean_direction = mean_direction
         self._concentration = concentration
         self._scale = scale
-        self._center = center if center is not None \
-                       else np.zeros_like(self._mean_direction)
         self._radius = radius if radius is not None \
                        else np.ones_like(self._concentration)
+        self._center = center if center is not None \
+                       else np.zeros_like(self._mean_direction)
 
         # From tfp.VonMisesFisher source code:
         #   "mean_direction is always reparameterized. concentration is only
