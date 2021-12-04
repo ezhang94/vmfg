@@ -6,7 +6,7 @@ import jax.numpy as np
 import scipy.special
 import jax.random as jr
 
-from vmfg import util
+from vmfg_etc import util
 
 def test_log_bessel_iv_asymptotic():
     nu = 5.

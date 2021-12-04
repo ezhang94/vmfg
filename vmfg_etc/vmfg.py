@@ -12,7 +12,7 @@ from functools import partial
 import jax.numpy as np
 import jax.random as jr
 
-from vmfg import util
+from vmfg_etc import util
 
 # TFP and helpers
 import tensorflow_probability.substrates.jax.distributions as tfd
@@ -20,7 +20,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.python.internal.reparameterization \
                             import FULLY_REPARAMETERIZED, NOT_REPARAMETERIZED
 from tensorflow_probability.substrates.jax.util import ParameterProperties
-from vmfg.util import PositiveScalarProperties
+from vmfg_etc.util import PositiveScalarProperties
 from tensorflow_probability.substrates.jax.internal.parameter_properties \
                                                 import BIJECTOR_NOT_IMPLEMENTED
 

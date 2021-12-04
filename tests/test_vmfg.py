@@ -3,7 +3,7 @@ import pytest
 import jax.numpy as np
 import jax.random as jr
 
-from vmfg import VonMisesFisherGaussian
+from vmfg_etc import VonMisesFisherGaussian
 
 SEED = jr.PRNGKey(1325)
 
