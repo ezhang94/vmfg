@@ -1,4 +1,5 @@
 from jax._src.numpy.lax_numpy import _arraylike
+from typing import Sequence
 
 import jax.numpy as np
 
@@ -25,6 +26,37 @@ class PositiveScalarProperties(ParameterProperties):
             specifies_shape=False,                              # default
         )
 
+# ============================================================================
+# Tree-structured graph functions
+# ============================================================================
+
+def parents_list_to_adjacency_mat(par_list: Sequence[int]) -> _arraylike:
+    """Converts condensed parent node encoding of tree-structured graphs into
+    square adjacency matrices.
+
+    Parameters
+        par_list : sequence, length N
+            Sequence of integers indicating the index of each parent, i.e.
+            `par[i]` is the parent node of node `i`. All nodes are ordered, wlog,
+            such that `par[i] <= i`. The parent of the root node is itself,
+            i.e. `par_list[0] = 0` is always true.
+
+    Returns
+        UA : array_like, shape (N,N)
+            Boolean upper triangular adjacency matrix, where `UA[j,i] == True`
+            if nodes `i` and `j` are connected, and more specifically, if `j` is
+            the parent node of `i`. The full adjacency matrix is constructed as
+            `UA + UA.T`
+    """
+
+    N  = len(par_list)
+    UA = np.zeros((N,N), dtype=bool)
+    
+    for ii, j in enumerate(par_list[1:]):
+        i = ii+1
+        UA = UA.at[j,i].set(True)
+
+    return UA
 
 # ============================================================================
 # Safe math

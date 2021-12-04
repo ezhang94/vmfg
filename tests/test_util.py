@@ -84,4 +84,33 @@ def test_log_vmf_normalizer():
 
     assert np.isclose(approx_val, exact_val, rtol=1e-5)
     assert np.abs(exact_val - approx_val) < err_small
+
+def test_parents_to_adjacency():
+    seed = jr.PRNGKey(1020)
+    N = 10                                          # Number of nodes in tree
+
+    parents = np.array(
+        [jr.randint(jr.fold_in(seed, i), (), 0, i, int)
+        for i in range(N)]
+    )
+
+    # Parent of root node is itself
+    assert parents[0] == 0
+
+    # Nodes should be ordered such that parent nodes always precede given node
+    assert np.all(parents <= np.arange(N))
+
+    # ------------------------------------------------------------------------
+    # Convert condensed list into (N,N) square upper adjacency matrix
+    upper_adj_mat = util.parents_list_to_adjacency_mat(parents)
+
+    # Sum over rows: Each node (except root) should have exactly 1 parent
+    assert np.all(upper_adj_mat[:,1:].sum(axis=0) == 1)
     
+    # Sum over columns: Indicates the number of children each node has
+    nodes_with_children, ref_num_children = \
+                                    np.unique(parents[1:], return_counts=True)
+    num_children_per_node = upper_adj_mat.sum(axis=-1)
+
+    assert np.all(np.nonzero(num_children_per_node)[0] == nodes_with_children)
+    assert np.all(num_children_per_node[nodes_with_children] == ref_num_children)
