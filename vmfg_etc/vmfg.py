@@ -52,6 +52,10 @@ class VonMisesFisherGaussian(tfd.Distribution):
             Radius of the hypersphere.
         center: shape ([B1,...,Bb], D), optional. default: origin
             Location of the center of the hypersphere.
+
+    TODO Add parameter reinterpreted_batch_ndim, a la tfd.Independent distribution
+    This allows us to change event shape, while still exposing the relevant
+    parameters of the vMFG that we are interested in.
     """
     def __init__(self,
                  mean_direction: _arraylike,
@@ -171,23 +175,23 @@ class VonMisesFisherGaussian(tfd.Distribution):
     def _log_prob(self, x:_arraylike) -> _arraylike:
         """Reference: Eqn. 4 of [1]."""
 
-        x0 = x - self._center                      # Translate samples to origin
+        x0 = x - self.center                       # Translate samples to origin
 
         # Log of exp term
         lp = np.einsum('...d, ...d -> ...', x0, x0)
-        lp += self._radius ** 2
-        lp /= (-2 * self._scale**2)
+        lp += self.radius ** 2
+        lp /= (-2 * self.scale**2)
 
         # Log normalization of posterior
-        cond_concentration = x0 * (self._radius/self._scale**2)[...,None]
-        cond_concentration += self._mean_direction * self._concentration[...,None]
+        cond_concentration = x0 * (self.radius/self.scale**2)[...,None]
+        cond_concentration += self.mean_direction * self.concentration[...,None]
         cond_concentration = np.linalg.norm(cond_concentration, axis=-1)
 
         lp -= self._log_vmf_normalizer(cond_concentration)
         
         # Log normalization of priors
-        lp += self._log_vmf_normalizer(self._concentration)
-        lp -= 0.5 * self.dim * np.log(2*np.pi*(self._scale**2))
+        lp += self._log_vmf_normalizer(self.concentration)
+        lp -= 0.5 * self.dim * np.log(2*np.pi*(self.scale**2))
 
         return lp
     
@@ -195,9 +199,8 @@ class VonMisesFisherGaussian(tfd.Distribution):
              ):
         raise NotImplementedError
 
-    def _mode(self,
-             ):
-        raise NotImplementedError
+    def _mode(self):
+        return self.mean_direction * self.radius[...,None] + self.center
     
     def _variance(self,
                  ):
