@@ -26,11 +26,45 @@ class PositiveScalarProperties(ParameterProperties):
             specifies_shape=False,                              # default
         )
 
+def SHAPE_FN_NOT_IMPLEMENTED(sample_shape):  # pylint: disable=invalid-name
+    """Raise NotImplementedError if shape_fn is called.
+
+    Function defined in tfp substrate but not the jax substrate. Source:
+    https://github.com/tensorflow/probability/blob/f3777158691787d3658b5e80883fe1a933d48989/tensorflow_probability/python/internal/parameter_properties.py
+
+    """
+    del sample_shape  # Unused
+    raise NotImplementedError('No shape function is implemented for this parameter.')
+
+class BatchedComponentProperties(ParameterProperties):
+    """Alias to assist in defining properties of non-Tensor parameters.
+
+    It is commonly used with definining properties of a distribution.
+    Function defined in tfp substrate but not the jax substrate. Source:
+    https://github.com/tensorflow/probability/blob/f3777158691787d3658b5e80883fe1a933d48989/tensorflow_probability/python/internal/parameter_properties.py    
+    """
+
+    def __new__(cls,
+                event_ndims=0,
+                event_ndims_tensor=None,
+                default_constraining_bijector_fn=None,
+                is_preferred=True):
+        
+        return super(BatchedComponentProperties, cls).__new__(
+            cls=cls,
+            event_ndims=event_ndims,
+            event_ndims_tensor=event_ndims_tensor,
+            shape_fn=SHAPE_FN_NOT_IMPLEMENTED,
+            default_constraining_bijector_fn=default_constraining_bijector_fn,
+            is_preferred=is_preferred,
+            is_tensor=False,
+            specifies_shape=False)
+
 # ============================================================================
 # Tree-structured graph functions
 # ============================================================================
 
-def parents_list_to_adjacency_mat(par_list: Sequence[int]) -> _arraylike:
+def parents_to_adjacency(par_list: Sequence[int]) -> _arraylike:
     """Converts condensed parent node encoding of tree-structured graphs into
     square adjacency matrices.
 

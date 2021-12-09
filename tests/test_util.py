@@ -102,7 +102,7 @@ def test_parents_to_adjacency():
 
     # ------------------------------------------------------------------------
     # Convert condensed list into (N,N) square upper adjacency matrix
-    upper_adj_mat = util.parents_list_to_adjacency_mat(parents)
+    upper_adj_mat = util.parents_to_adjacency(parents)
 
     # Sum over rows: Each node (except root) should have exactly 1 parent
     assert np.all(upper_adj_mat[:,1:].sum(axis=0) == 1)
